@@ -1,75 +1,59 @@
-# microbit-v2-samples
+# birdbrain-finch-microbit-cpp-api
 
-[![Native Build Status](https://github.com/lancaster-university/microbit-v2-samples/actions/workflows/build.yml/badge.svg)](https://github.com/lancaster-university/microbit-v2-samples/actions/workflows/build.yml) [![Docker Build Status](https://github.com/lancaster-university/microbit-v2-samples/actions/workflows/docker-image.yml/badge.svg)](https://github.com/lancaster-university/microbit-v2-samples/actions/workflows/docker-image.yml)
+This repository provides a C/C++ API for programming the [BirdBrain Finch 2.0](https://www.birdbraintechnologies.com/products/finch-robot-2-0/) in untethered mode.
 
-This repository provides the necessary tooling to compile a C/C++ CODAL program for the micro:bit V2 and generate a HEX file that can be downloaded to the device.
+This lets you program the Finch in C/C++, producing a hex file that can be
+copied over USB to the Finch, which can then run your program fully untethered.
 
-## Raising Issues
-Any issues regarding the micro:bit are gathered on the [lancaster-university/codal-microbit-v2](https://github.com/lancaster-university/codal-microbit-v2) repository. Please raise yours there too.
+It uses the [CODAL](https://tech.microbit.org/software/runtime/) framework for
+the micro:bit v2 that powers the Finch 2.0. So your C++ code can use features of
+CODAL, such as cooperative concurrency with lightweight threads (fibers), and
+other CODAL and micro:bit features.
 
-# Installation
-You need some open source pre-requisites to build this repo. You can either install these tools yourself, or use the docker image provided below.
+For the most part, the Finch API provided here mimics [BirdBrain's Java API](https://learn.birdbraintechnologies.com/slpage/java-installation-for-finch/),
+with only a few minor alterations and additions.
 
-- [GNU Arm Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
-- [Git](https://git-scm.com)
-- [CMake](https://cmake.org/download/)
-- [Python 3](https://www.python.org/downloads/)
+## Quick Start
 
-We use Ubuntu Linux for most of our tests. You can also install these tools easily through the package manager:
+* Clone this repository.
+* Edit source/main.cpp, and examine source/Finch.h for API documentation.
+* Install the embedded arm toolchain. On MacOS you might try `brew install armmbed/formulae/arm-none-eabi-gcc` or follow the install instructions
+  for the [microbit-v2-samples](https://github.com/lancaster-university/microbit-v2-samples).
+* Run `python3 build.py` to compile.
+* Copy the resulting MICROBIT.hex file to your Finch over USB. For example, plug
+  in the USB, then `cp MICROBIT.hex /Volumes/MICROBIT/`
+* Be sure to turn on the Finch -- the microbit will boot from USB power without
+  turning on the Finch itself, so you need to do that manually. You'll get a sad
+  face and warning if you forget.
 
-```
-    sudo apt install gcc
-    sudo apt install git
-    sudo apt install cmake
-    sudo apt install gcc-arm-none-eabi binutils-arm-none-eabi
-```
+## Notes
 
-## Yotta
-For backwards compatibility with [microbit-samples](https://github.com/lancaster-university/microbit-samples) users, we also provide a yotta target for this repository.
+* This is a work in progress, a few methods aren't yet tested or implemented,
+  such as the magnetometer/compass and related calibration routine.
 
-## Docker
-You can use the [Dockerfile](https://github.com/lancaster-university/microbit-v2-samples/blob/master/Dockerfile) provided to build the samples, or your own project sources, without installing additional dependencies.
+* It would be nice to add a song playback feature. And a way to display a few
+  old-style emoticons, like...   :-)   :D   :(   :/ 
 
-Run the following command to build the image locally; the .bin and .hex files from a successful compile will be placed in a new `out/` directory:
+* The Bluetooth BLE stack is entirely disabled, and this code doesn't use the
+  USB uart while running. USB is used for downloading hex files, but is
+  otherwise not used.
 
-```
-    docker build -t microbit-tools --output out .
-```
+* Conceivably, USB uart could be enabled for tethered debugging.
 
-To omit the final output stage (for CI, for example) run without the `--output` arguments:
+* Conceivably, BLE uart could be enabled for robot-to-robot communication.
 
-```
-    docker build -t microbit-tools .
-```
+## Helpful Documentation
 
-# Building
-- Clone this repository
-- In the root of this repository type `python build.py`
-- The hex file will be built `MICROBIT.hex` and placed in the root folder.
+The Finch hardware and firmware is only partly documented, and not always
+accurately, unfortunately. It helps that much of the software is open-source.
+Much of this work was accomplished by examining:
 
-# Developing
-You will find a simple main.cpp in the `source` folder which you can edit. CODAL will also compile any other C/C++ header files our source files with the extension `.h .c .cpp` it finds in the source folder.
+* [Finch SPI Protocol documentation](https://github.com/BirdBrainTechnologies/Protocols/blob/master/MicroBitProtocols.md#finch-spi)
 
-The `samples` folder contains a number of simple sample programs that utilise you may find useful.
+* Source for [Finch's BLE bootloader](https://github.com/Roversa-Robotics/microbit-v2-BirdBrain-BLE)
 
-## Developer codal.json
+* Source for [BirdBrain's BlueBird Connector](https://github.com/BirdBrainTechnologies/BlueBirdJava)
 
-There is an example `coda.dev.json` file which enables "developer builds" (clones dependencies from the latest commits, instead of the commits locked in the `codal-microbit-v2` tag), and adds extra CODAL flags that enable debug data to be printed to serial.
-To use it, simply copy the additional json entries into your `codal.json` file, or you can replace the file completely (`mv coda.dev.json codal.json`).
+* Source for [BirdBrain's Java API](https://learn.birdbraintechnologies.com/slpage/java-installation-for-finch/),
 
-# Debugging
-If you are using Visual Studio Code, there is a working debugging environment already set up for you, allowing you to set breakpoints and observe the micro:bit's memory. To get it working, follow these steps:
-
-1. Install either [OpenOCD](http://openocd.org) or [PyOCD](https://github.com/pyocd/pyOCD).
-2. Install the [`marus25.cortex-debug` VS Code extension](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug).
-3. Build your program.
-4. Click the Run and Debug option in the toolbar.
-5. Two debugging options are provided: one for OpenOCD, and one for PyOCD. Select the correct one depending on the debugger you installed.
-
-This should launch the debugging environment for you. To set breakpoints, you can click to the left of the line number of where you want to stop.
-
-# Compatibility
-This repository is designed to follow the principles and APIs developed for the first version of the micro:bit. We have also included a compatibility layer so that the vast majority of C/C++ programs built using [microbit-dal](https://www.github.com/lancaster-university/microbit-dal) will operate with few changes.
-
-# Documentation
-API documentation is embedded in the code using doxygen. We will produce integrated web-based documentation soon.
+* [micro:bit and CODAL programming docs](https://lancaster-university.github.io/microbit-docs/)
