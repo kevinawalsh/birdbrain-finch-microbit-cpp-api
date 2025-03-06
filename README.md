@@ -57,3 +57,63 @@ Much of this work was accomplished by examining:
 * Source for [BirdBrain's Java API](https://learn.birdbraintechnologies.com/slpage/java-installation-for-finch/),
 
 * [micro:bit and CODAL programming docs](https://lancaster-university.github.io/microbit-docs/)
+
+## BirdBrain Finch V2 Languages and Tethered vs Untethered Operation
+
+The [BirdBrain Finch 2.0](https://www.birdbraintechnologies.com/products/finch-robot-2-0/)
+official website could be more clear about how these robots are programmed.
+There are numerous languages and platforms supported, but they don't work the
+same and aren't interchangeable. They fall into two categories:
+
+* **Tethered USB** Program code runs on a laptop/desktop, sending commands over
+  USB to control the robot. The robot remains tethered via the USB cable, so has
+  a maximum range of just two feet or so, or perhaps a few meters with a long
+  USB cable.
+* **Tethered Bluetooth** Program code runs on a laptop/desktop, or a
+  phone/tablet, sending commands over bluetooth to control the robot. The robot
+  must stay within bluetooth range, perhaps a few meters or so. 
+* **Untethered** Code is compiled into a hex file, which is uploaded to the
+  robot over USB. The robot can then be disconnected and run untethered. The hex
+  program is presistent, across robot reboots, until overrwritten.
+
+For all tethered modes, the robot must be running a specific `BBTFirmware.hex`
+file, so it can accept bluetooth or USB commands. For desktops/laptops, tethered
+modes also require a [BlueBird Connector App](https://learn.birdbraintechnologies.com/install-shortcuts/) daemon.
+
+Languages include:
+
+* **Plain Java**: text-based, command-line, Bluetooth-tethered. This is regular
+  java, compiled using javac on the command line, using a simple BirdBrain
+  library included with functions for moving, turning, playing sounds, etc.
+* **Greenfoot Java**: IDE with graphical simulator, Bluetooth-tethered. Uses a
+  bespoke IDE first relased in 2006 but still updated and maintained to some
+  degree.
+* **C/C++**: text-based, command-line, untethered. Not officially supported by
+  BirdBrain, but provided by this repository instead. Compiles directly to hex
+  using GCC embdedded ARM toolchain.
+* **Microsoft MakeCode**: block-based programming, in-browser, untethered.
+  Somewhat like Scratch, but also has a "javascript" view. Compiles to hex in
+  the browser, and can either upload to robot via USB directly from browser, or
+  you can download the hex file and upload it to the robot over USB as a
+  separate step.
+* **BirdBlox**: block-based, iOS app for phone or ipad, bluetooth-tethered.
+  Block-based, code right in the app on a phone or ipad, almost exactly like Scratch.
+  Code runs immediately via bluetooth tether.
+* **FinchBlox**: block-based, in-browser, bluetooth-tethered. Similar to
+  MakeCode but far more limited programming capabilities, intended for only the
+  simplest programs.
+
+## Tethered Bluetooth Architecture
+
+My best guess as to the overall bluetooth architecture, pieced together from
+source code and other documents...
+
+    +------ Finch Robot Body -------+----micro:bit v2----+     +---- Laptop Host ----+
+    |     SAMD microprocessor       |    ARM Cortex      |     |  Java Program       |
+    |     (unknown firmware)        | (BBTFirmware.hex)  |     |   ^                 |
+    | with sensors, actuators, etc. |  with BLE radio    |     |   | HTTP to         | 
+    +-------------------------------+--------------------+     |   | localhost       |
+            ^                           ^   ^                  |   v                 |
+            '--- Finch SPI protocol-----'   '--Bluetooth-----> |  BlueBird Connector |
+                                                               +---------------------+
+
